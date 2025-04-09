@@ -1,0 +1,79 @@
+// App.js
+import React, { useState } from "react";
+import axios from "axios";
+
+const BASE_API = "http://localhost:9876/numbers"; // Change to your backend host if needed
+
+const App = () => {
+  const [numberId, setNumberId] = useState("p");
+  const [responseData, setResponseData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchNumbers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(${BASE_API}/${numberId});
+      setResponseData(response.data);
+    } catch (error) {
+      alert("Error fetching data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={styles.container}>
+      <h1>Average Calculator Microservice</h1>
+      <select
+        style={styles.select}
+        value={numberId}
+        onChange={(e) => setNumberId(e.target.value)}
+      >
+        <option value="p">Prime</option>
+        <option value="f">Fibonacci</option>
+        <option value="e">Even</option>
+        <option value="r">Random</option>
+      </select>
+      <button style={styles.button} onClick={fetchNumbers}>
+        Fetch Numbers
+      </button>
+
+      {loading && <p>Loading...</p>}
+
+      {responseData && (
+        <div style={styles.resultBox}>
+          <p><strong>Previous Window:</strong> {JSON.stringify(responseData.windowPrevState)}</p>
+          <p><strong>Current Window:</strong> {JSON.stringify(responseData.windowCurrState)}</p>
+          <p><strong>Numbers:</strong> {JSON.stringify(responseData.numbers)}</p>
+          <p><strong>Average:</strong> {responseData.avg}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const styles = {
+  container: {
+    fontFamily: "Arial",
+    textAlign: "center",
+    padding: "30px",
+  },
+  select: {
+    padding: "10px",
+    marginRight: "10px",
+  },
+  button: {
+    padding: "10px 20px",
+    fontSize: "16px",
+  },
+  resultBox: {
+    marginTop: "30px",
+    backgroundColor: "#f3f3f3",
+    padding: "20px",
+    borderRadius: "8px",
+    textAlign: "left",
+    display: "inline-block",
+  },
+};
+
+export default App;

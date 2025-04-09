@@ -1,0 +1,133 @@
+// main.jsx
+import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import axios from 'axios';
+
+function TopUsers() {
+  const [topUsers, setTopUsers] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://localhost:3000/api/posts').then((res) => {
+      const posts = res.data;
+      const userCommentCount = {};
+
+      posts.forEach((post) => {
+        const userId = post.userId;
+        userCommentCount[userId] = (userCommentCount[userId] || 0) + post.comments.length;
+      });
+
+      const sorted = Object.entries(userCommentCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([userId, count]) => ({ userId, count }));
+
+      setTopUsers(sorted);
+    });
+  }, []);
+
+  return (
+    <div>
+      <h2 className="text-xl font-semibold mb-2">Top Users</h2>
+      <ul>
+        {topUsers.map((user) => (
+          <li key={user.userId} className="mb-1">
+            User {user.userId} - {user.count} comments
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function TrendingPosts() {
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://localhost:3000/api/posts').then((res) => {
+      const allPosts = res.data;
+      const maxComments = Math.max(...allPosts.map((post) => post.comments.length));
+      const trending = allPosts.filter((post) => post.comments.length === maxComments);
+      setPosts(trending);
+    });
+  }, []);
+
+  return (
+    <div>
+      <h2 className="text-xl font-semibold mb-2">Trending Posts</h2>
+      <ul>
+        {posts.map((post) => (
+          <li key={post.id} className="mb-3">
+            <div className="font-bold">Post ID: {post.id}</div>
+            <div>Comments: {post.comments.length}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Feed() {
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    const fetchPosts = () => {
+      axios.get('http://localhost:3000/api/posts').then((res) => {
+        const sortedPosts = res.data.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        );
+        setPosts(sortedPosts);
+      });
+    };
+
+    fetchPosts();
+    const interval = setInterval(fetchPosts, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div>
+      <h2 className="text-xl font-semibold mb-2">Live Feed</h2>
+      <ul>
+        {posts.map((post) => (
+          <li key={post.id} className="mb-3">
+            <div className="font-bold">Post ID: {post.id}</div>
+            <div>{post.content}</div>
+            <div className="text-sm text-gray-600">Comments: {post.comments.length}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function App() {
+  const [page, setPage] = useState('top');
+
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Social Media Analytics</h1>
+      <nav className="mb-4 flex gap-2">
+        <button onClick={() => setPage('top')} className="bg-blue-500 text-white px-3 py-1 rounded">
+          Top Users
+        </button>
+        <button onClick={() => setPage('trending')} className="bg-green-500 text-white px-3 py-1 rounded">
+          Trending Posts
+        </button>
+        <button onClick={() => setPage('feed')} className="bg-purple-500 text-white px-3 py-1 rounded">
+          Feed
+        </button>
+      </nav>
+
+      {page === 'top' && <TopUsers />}
+      {page === 'trending' && <TrendingPosts />}
+      {page === 'feed' && <Feed />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
